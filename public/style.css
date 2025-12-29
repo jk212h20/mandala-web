@@ -549,12 +549,12 @@ body {
 /* ===== CARDS ===== */
 .card {
   width: 32px;
-  height: 44px;
+  height: 32px;
   border-radius: 5px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.6rem;
+  font-size: 0.55rem;
   font-weight: bold;
   cursor: pointer;
   transition: transform 0.15s, box-shadow 0.15s;
@@ -572,14 +572,14 @@ body {
 .card.hidden { background: var(--card-hidden); }
 
 .card.large {
-  width: 44px;
-  height: 60px;
-  font-size: 0.75rem;
+  width: 40px;
+  height: 40px;
+  font-size: 0.7rem;
 }
 
 .card.small {
   width: 24px;
-  height: 32px;
+  height: 24px;
   font-size: 0.5rem;
 }
 
@@ -737,6 +737,92 @@ body {
   min-height: 1.5em;
 }
 
+/* Claimable cards in mountain during destruction */
+.card.claimable {
+  cursor: pointer;
+  animation: claimPulse 1s ease-in-out infinite;
+}
+
+.card.claimable:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 15px rgba(255, 217, 61, 0.6);
+}
+
+@keyframes claimPulse {
+  0%, 100% { box-shadow: 0 0 5px rgba(255, 217, 61, 0.4); }
+  50% { box-shadow: 0 0 15px rgba(255, 217, 61, 0.8); }
+}
+
+/* Discard pile */
+.discard-pile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 15px;
+  background: rgba(0, 0, 0, 0.2);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+}
+
+.discard-pile .label {
+  font-weight: 600;
+}
+
+.discard-cards {
+  display: flex;
+  gap: 2px;
+  flex-wrap: wrap;
+}
+
+/* Field with inline action button */
+.field-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.field-content .cards-row {
+  flex: 1;
+}
+
+.field-content .btn {
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+/* Mountain with inline action button */
+.mountain-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.mountain-content .cards-row {
+  justify-content: center;
+}
+
+.mountain-content .btn {
+  padding: 6px 12px;
+  font-size: 0.75rem;
+}
+
+/* Rules link */
+.rules-link {
+  color: var(--accent-cyan);
+  text-decoration: none;
+  font-size: 0.9rem;
+  margin-top: 1rem;
+}
+
+.rules-link:hover {
+  text-decoration: underline;
+}
+
 /* ===== RESPONSIVE (Tablet and Desktop) ===== */
 @media (min-width: 768px) {
   .lobby-content h1 {
@@ -757,18 +843,18 @@ body {
   
   .card {
     width: 40px;
-    height: 54px;
+    height: 40px;
     font-size: 0.7rem;
   }
   
   .card.large {
-    width: 50px;
-    height: 68px;
+    width: 48px;
+    height: 48px;
   }
   
   .river-slot {
     width: 44px;
-    height: 58px;
+    height: 44px;
   }
   
   .hand-cards {

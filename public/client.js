@@ -170,23 +170,22 @@ function renderGame() {
   renderCup('your-cup-cards', gameState.players[myIndex].cup);
   document.getElementById('your-cup-count').textContent = gameState.players[myIndex].cup.length;
   
+  // Render discard pile
+  renderDiscardPile();
+  
   // Render hand
   renderHand();
   
   // Render mandalas
   for (let m = 0; m < 2; m++) {
-    renderMandala(m);
+    renderMandala(m, isMyClaimTurn);
   }
   
   // Update action buttons
   updateActions();
   
-  // Show claim modal if needed
-  if (isMyClaimTurn) {
-    showClaimModal();
-  } else {
-    modals.claim.classList.add('hidden');
-  }
+  // Hide claim modal (we use inline claiming now)
+  modals.claim.classList.add('hidden');
 }
 
 function renderRiver(containerId, river, isOpponent) {
@@ -265,10 +264,39 @@ function renderHand() {
   }
 }
 
-function renderMandala(mandalaIndex) {
+function renderDiscardPile() {
+  const container = document.getElementById('discard-cards');
+  container.innerHTML = '';
+  
+  const discardPile = gameState.discardPile || [];
+  document.getElementById('discard-count').textContent = discardPile.length;
+  
+  // Group by color and show small indicators
+  const colorCounts = {};
+  discardPile.forEach(card => {
+    colorCounts[card.color] = (colorCounts[card.color] || 0) + 1;
+  });
+  
+  COLORS.forEach(color => {
+    const count = colorCounts[color] || 0;
+    if (count > 0) {
+      const cardEl = document.createElement('div');
+      cardEl.className = `card small ${color}`;
+      cardEl.textContent = count;
+      container.appendChild(cardEl);
+    }
+  });
+}
+
+function renderMandala(mandalaIndex, isMyClaimTurn) {
   const mandala = gameState.mandalas[mandalaIndex];
   const myIndex = playerIndex;
   const oppIndex = 1 - playerIndex;
+  
+  // Check if this mandala is being destroyed and it's my turn to claim
+  const isThisMandalaClaiming = gameState.phase === 'destroying' && 
+    gameState.destruction?.mandalaIndex === mandalaIndex;
+  const canClaimHere = isThisMandalaClaiming && isMyClaimTurn;
   
   // Count colors in mandala
   const colors = new Set();
@@ -281,17 +309,49 @@ function renderMandala(mandalaIndex) {
   
   // Highlight if destroying
   const mandalaEl = document.getElementById(`mandala-${mandalaIndex}`);
-  mandalaEl.classList.toggle('destroying', 
-    gameState.phase === 'destroying' && gameState.destruction?.mandalaIndex === mandalaIndex);
+  mandalaEl.classList.toggle('destroying', isThisMandalaClaiming);
   
-  // Render mountain
+  // Render mountain with claimable cards if in claim phase
   const mountainEl = document.getElementById(`mandala-${mandalaIndex}-mountain-cards`);
   mountainEl.innerHTML = '';
-  sortCards(mandala.mountain).forEach(card => {
-    const cardEl = document.createElement('div');
-    cardEl.className = `card ${card.color}`;
-    mountainEl.appendChild(cardEl);
-  });
+  
+  if (canClaimHere) {
+    // Group cards by color for claiming
+    const colorGroups = {};
+    mandala.mountain.forEach(card => {
+      if (!colorGroups[card.color]) {
+        colorGroups[card.color] = [];
+      }
+      colorGroups[card.color].push(card);
+    });
+    
+    // Render each color group as claimable
+    const remainingColors = gameState.destruction.remainingColors;
+    COLORS.forEach(color => {
+      const cards = colorGroups[color];
+      if (cards && cards.length > 0) {
+        const isClaimable = remainingColors.includes(color);
+        cards.forEach((card, i) => {
+          const cardEl = document.createElement('div');
+          cardEl.className = `card ${card.color}`;
+          if (isClaimable && i === 0) {
+            // Only first card of each color is clickable (represents the whole stack)
+            cardEl.classList.add('claimable');
+            cardEl.title = `Click to claim ${cards.length} ${color} card(s)`;
+            cardEl.onclick = () => claimColor(color);
+          }
+          mountainEl.appendChild(cardEl);
+        });
+      }
+    });
+  } else {
+    // Normal render
+    sortCards(mandala.mountain).forEach(card => {
+      const cardEl = document.createElement('div');
+      cardEl.className = `card ${card.color}`;
+      mountainEl.appendChild(cardEl);
+    });
+  }
   
   // Render fields
   // Note: field indices in game state are absolute (0 and 1)

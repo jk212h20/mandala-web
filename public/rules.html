@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Mandala - How to Play</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .rules-container {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 20px;
+      padding-top: calc(20px + var(--safe-area-top));
+      padding-bottom: calc(20px + var(--safe-area-bottom));
+      overflow-y: auto;
+      height: 100%;
+    }
+    
+    .rules-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    
+    .rules-header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .back-link {
+      color: var(--accent-cyan);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-bottom: 1rem;
+    }
+    
+    .back-link:hover {
+      text-decoration: underline;
+    }
+    
+    h2 {
+      color: var(--accent-yellow);
+      margin: 1.5rem 0 1rem;
+      font-size: 1.3rem;
+    }
+    
+    h3 {
+      color: var(--accent-cyan);
+      margin: 1rem 0 0.5rem;
+      font-size: 1.1rem;
+    }
+    
+    p, li {
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 0.75rem;
+    }
+    
+    ul, ol {
+      padding-left: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .color-example {
+      display: inline-flex;
+      gap: 4px;
+      vertical-align: middle;
+      margin: 0 4px;
+    }
+    
+    .highlight {
+      color: var(--accent-yellow);
+      font-weight: 600;
+    }
+    
+    .section {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    
+    .tip {
+      background: rgba(78, 205, 196, 0.1);
+      border-left: 3px solid var(--accent-cyan);
+      padding: 10px 15px;
+      margin: 1rem 0;
+      border-radius: 0 8px 8px 0;
+    }
+    
+    .tip-title {
+      color: var(--accent-cyan);
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="rules-container">
+      <a href="index.html" class="back-link">← Back to Game</a>
+      
+      <div class="rules-header">
+        <h1>🎨 Mandala</h1>
+        <p>A strategic two-player card game</p>
+      </div>
+      
+      <div class="section">
+        <h2>🎯 Goal</h2>
+        <p>Score the most points by collecting cards into your <span class="highlight">Cup</span> and building your <span class="highlight">River</span> (which determines how much each color is worth).</p>
+      </div>
+      
+      <div class="section">
+        <h2>🃏 Components</h2>
+        <p>The game uses 108 cards in 6 colors:</p>
+        <ul>
+          <li><span class="card small red"></span> Red (18 cards)</li>
+          <li><span class="card small orange"></span> Orange (18 cards)</li>
+          <li><span class="card small yellow"></span> Yellow (18 cards)</li>
+          <li><span class="card small green"></span> Green (18 cards)</li>
+          <li><span class="card small purple"></span> Purple (18 cards)</li>
+          <li><span class="card small black"></span> Black (18 cards)</li>
+        </ul>
+        <p>There are two <span class="highlight">Mandalas</span> (game boards), each with a <span class="highlight">Mountain</span> (center) and two <span class="highlight">Fields</span> (one per player).</p>
+      </div>
+      
+      <div class="section">
+        <h2>📋 Setup</h2>
+        <ul>
+          <li>Each player draws 6 cards to form their hand</li>
+          <li>Each player gets 2 hidden cards in their Cup (starting cards)</li>
+          <li>The Mountains and Fields start empty</li>
+        </ul>
+      </div>
+      
+      <div class="section">
+        <h2>🎮 On Your Turn</h2>
+        <p>Do <span class="highlight">ONE</span> of the following actions:</p>
+        
+        <h3>1. Play to the Mountain</h3>
+        <p>Play <span class="highlight">1 card</span> of any color to a Mountain's center.</p>
+        <p><em>Restriction:</em> The color cannot already be in either player's Field of that Mandala.</p>
+        
+        <h3>2. Play to Your Field</h3>
+        <p>Play <span class="highlight">1 or more cards</span> of the <span class="highlight">same color</span> to your Field.</p>
+        <p><em>Restrictions:</em></p>
+        <ul>
+          <li>The color cannot be in the Mountain of that Mandala</li>
+          <li>The color cannot be in your opponent's Field of that Mandala</li>
+          <li>You must keep at least 1 card in your hand</li>
+        </ul>
+        
+        <h3>3. Discard & Draw</h3>
+        <p>Discard 1 or more cards of the same color, then draw cards equal to the number discarded (if available).</p>
+      </div>
+      
+      <div class="section">
+        <h2>🏔️ Completing a Mandala</h2>
+        <p>When a Mandala has <span class="highlight">all 6 colors</span> represented (between Mountain and both Fields), it is <span class="highlight">destroyed</span>!</p>
+        
+        <h3>The Destruction Process:</h3>
+        <ol>
+          <li>The player with <span class="highlight">more cards in their Field</span> claims first (ties: whoever played there first)</li>
+          <li>Players alternate claiming colors from the Mountain</li>
+          <li>For each color claimed:
+            <ul>
+              <li><span class="highlight">1 card</span> goes to your River (if that color slot is empty)</li>
+              <li><span class="highlight">Rest</span> go to your Cup (for end-game scoring)</li>
+            </ul>
+          </li>
+          <li>After all Mountain colors are claimed, Field cards are discarded</li>
+        </ol>
+      </div>
+      
+      <div class="section">
+        <h2>🌊 The River</h2>
+        <p>Your River has 6 slots numbered <span class="highlight">1-6</span>. The first color you add goes in slot 1, second in slot 2, etc.</p>
+        <p>At game end, the slot number = <span class="highlight">points per card</span> of that color in your Cup.</p>
+        
+        <div class="tip">
+          <div class="tip-title">💡 Strategy Tip</div>
+          <p>Get your best colors early in your River (higher numbers = more points). But remember: you only add a color to your River the <em>first</em> time you claim it!</p>
+        </div>
+      </div>
+      
+      <div class="section">
+        <h2>🏁 Game End</h2>
+        <p>The game ends when a player <span class="highlight">cannot draw up to 6 cards</span> at the end of their turn (deck is empty).</p>
+        
+        <h3>Scoring:</h3>
+        <p>For each color in your River: <span class="highlight">River Value × Cards in Cup</span></p>
+        <p>Example: If Purple is in your River slot 5, and you have 7 Purple cards in your Cup = 5 × 7 = <span class="highlight">35 points</span></p>
+        
+        <p><span class="highlight">Highest total score wins!</span></p>
+      </div>
+      
+      <div class="section">
+        <h2>💡 Quick Tips</h2>
+        <ul>
+          <li><strong>Claim order matters</strong> - Try to be first claimer to get your preferred colors</li>
+          <li><strong>Watch the discard pile</strong> - Track which colors are running low</li>
+          <li><strong>River positioning is key</strong> - Colors you'll collect many of should be in high-value River slots</li>
+          <li><strong>Block opponents</strong> - Play colors to Mountains that your opponent needs in their Field</li>
+          <li><strong>Timing the end</strong> - If you're ahead, try to end the game; if behind, keep it going</li>
+        </ul>
+      </div>
+      
+      <div style="text-align: center; margin-top: 2rem;">
+        <a href="index.html" class="btn btn-primary" style="display: inline-block; width: auto; padding: 14px 40px;">🎮 Play Now</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
