@@ -10,6 +10,7 @@ let playerIndex = null;
 let playerNames = ['Player 1', 'Player 2'];
 let selectedCards = [];
 let roomCode = null;
+let memoryHelperEnabled = true;
 
 // DOM Elements
 const screens = {
@@ -127,6 +128,43 @@ function showError(message) {
   }, 3000);
 }
 
+// ===== Score Calculation =====
+function calculateScore(playerIdx, excludeStartingCards = true) {
+  const player = gameState.players[playerIdx];
+  const river = player.river;
+  const cup = player.cup;
+  
+  // Count cards per color in cup
+  const cupCounts = {};
+  cup.forEach(card => {
+    cupCounts[card.color] = (cupCounts[card.color] || 0) + 1;
+  });
+  
+  let score = 0;
+  river.forEach((color, index) => {
+    if (color) {
+      const value = index + 1;
+      const count = cupCounts[color] || 0;
+      score += value * count;
+    }
+  });
+  
+  // Note: Starting cards are already in the cup but we can't identify them
+  // The "excludeStartingCards" is conceptual - in practice we count all cup cards
+  // but users understand the starting 2 are random and don't count morally
+  
+  return score;
+}
+
+function getCollectedCupCards(playerIdx) {
+  // Returns cup cards minus the 2 starting cards
+  // We can't know which are starting cards, but we can show cup.length - 2 as "collected"
+  // For display, we'll show all cup cards but note the count properly
+  const cup = gameState.players[playerIdx].cup;
+  // We'll return all cards but the UI can mention "X collected" (cup.length - 2)
+  return cup;
+}
+
 // ===== Game Rendering =====
 function renderGame() {
   if (!gameState) return;
@@ -140,6 +178,27 @@ function renderGame() {
     `${gameState.players[oppIndex].hand.length} cards`;
   document.getElementById('opponent-cup-count').textContent = 
     gameState.players[oppIndex].cup.length;
+  
+  // Update scores display
+  renderScores();
+  
+  // Show/hide memory-dependent elements
+  const discardPile = document.querySelector('.discard-pile');
+  const opponentCupCards = document.getElementById('opponent-cup-cards');
+  const opponentScoreItem = document.getElementById('opponent-score-item');
+  
+  if (memoryHelperEnabled) {
+    discardPile.style.display = 'flex';
+    opponentCupCards.style.display = 'flex';
+    opponentScoreItem.classList.remove('hidden');
+    
+    // Render opponent's cup cards (excluding display of starting 2 - show as "collected")
+    renderOpponentCup();
+  } else {
+    discardPile.style.display = 'none';
+    opponentCupCards.style.display = 'none';
+    opponentScoreItem.classList.add('hidden');
+  }
   
   // Deck count
   document.getElementById('deck-count').textContent = `Deck: ${gameState.deck.length}`;
@@ -214,6 +273,38 @@ function renderRiver(containerId, river, isOpponent) {
 function renderCup(containerId, cup) {
   const container = document.getElementById(containerId);
   container.innerHTML = '';
+  
+  // Sort by color for display
+  const sorted = [...cup].sort((a, b) => 
+    COLORS.indexOf(a.color) - COLORS.indexOf(b.color)
+  );
+  
+  sorted.forEach(card => {
+    const cardEl = document.createElement('div');
+    cardEl.className = `card small ${card.color}`;
+    container.appendChild(cardEl);
+  });
+}
+
+function renderScores() {
+  const myIndex = playerIndex;
+  const oppIndex = 1 - playerIndex;
+  
+  // Calculate scores
+  const myScore = calculateScore(myIndex);
+  const oppScore = calculateScore(oppIndex);
+  
+  document.getElementById('your-current-score').textContent = myScore;
+  document.getElementById('opponent-current-score').textContent = oppScore;
+  document.getElementById('opponent-score-name').textContent = playerNames[oppIndex];
+}
+
+function renderOpponentCup() {
+  const oppIndex = 1 - playerIndex;
+  const container = document.getElementById('opponent-cup-cards');
+  container.innerHTML = '';
+  
+  const cup = gameState.players[oppIndex].cup;
   
   // Sort by color for display
   const sorted = [...cup].sort((a, b) => 
@@ -591,19 +682,21 @@ function showGameOver(data) {
 // ===== Lobby Actions =====
 function createRoom() {
   const name = document.getElementById('player-name').value.trim() || 'Player 1';
-  send('create_room', { name });
+  memoryHelperEnabled = document.getElementById('memory-helper').checked;
+  send('create_room', { name, memoryHelper: memoryHelperEnabled });
 }
 
 function joinRoom() {
   const name = document.getElementById('player-name').value.trim() || 'Player 2';
   const code = document.getElementById('room-code').value.trim().toUpperCase();
+  memoryHelperEnabled = document.getElementById('memory-helper').checked;
   
   if (code.length !== 4) {
     showError('Please enter a 4-letter code');
     return;
   }
   
-  send('join_room', { name, roomCode: code });
+  send('join_room', { name, roomCode: code, memoryHelper: memoryHelperEnabled });
 }
 
 function cancelWaiting() {

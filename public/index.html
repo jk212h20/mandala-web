@@ -21,6 +21,14 @@
           <input type="text" id="player-name" placeholder="Enter your name" maxlength="20" value="">
         </div>
         
+        <div class="game-options">
+          <label class="checkbox-option">
+            <input type="checkbox" id="memory-helper" checked>
+            <span class="checkbox-label">🧠 Perfect Memory Helper</span>
+            <span class="checkbox-hint">Shows discard pile, cup cards, and both scores</span>
+          </label>
+        </div>
+        
         <div class="lobby-buttons">
           <button id="create-btn" class="btn btn-primary">
             <span class="btn-icon">✨</span>
@@ -71,13 +79,26 @@
         </div>
       </div>
       
+      <!-- Scores Bar -->
+      <div class="scores-bar">
+        <div class="score-item your-score-item">
+          <span class="score-name">You</span>
+          <span id="your-current-score" class="score-current">0</span>
+        </div>
+        <div id="opponent-score-item" class="score-item opponent-score-item">
+          <span id="opponent-score-name" class="score-name">Opponent</span>
+          <span id="opponent-current-score" class="score-current">0</span>
+        </div>
+      </div>
+      
       <!-- Opponent's Area (collapsed) -->
       <div class="opponent-area">
         <div class="opponent-river" id="opponent-river"></div>
-        <div class="opponent-cup">
+        <div class="opponent-cup" id="opponent-cup-section">
           <span class="label">Cup:</span>
           <span id="opponent-cup-count">2</span>
           <span class="label">cards</span>
+          <div class="cup-cards" id="opponent-cup-cards"></div>
         </div>
       </div>
       
