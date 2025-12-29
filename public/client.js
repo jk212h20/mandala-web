@@ -11,6 +11,7 @@ let playerNames = ['Player 1', 'Player 2'];
 let selectedCards = [];
 let roomCode = null;
 let memoryHelperEnabled = true;
+let lastMove = null; // Track last move for highlighting
 
 // DOM Elements
 const screens = {
@@ -172,6 +173,17 @@ function renderGame() {
   const myIndex = playerIndex;
   const oppIndex = 1 - playerIndex;
   
+  // Store lastMove from gameState if available
+  if (gameState.lastAction) {
+    lastMove = gameState.lastAction;
+  }
+  
+  // Your turn glow
+  const isMyTurn = gameState.currentPlayerIndex === myIndex;
+  const isClaimPhase = gameState.phase === 'destroying';
+  const isMyClaimTurn = isClaimPhase && gameState.destruction?.currentClaimerIndex === myIndex;
+  screens.game.classList.toggle('your-turn', (isMyTurn && !isClaimPhase) || isMyClaimTurn);
+  
   // Opponent info
   document.getElementById('opponent-name').textContent = playerNames[oppIndex];
   document.getElementById('opponent-hand-count').textContent = 
@@ -206,9 +218,6 @@ function renderGame() {
   // Turn indicator
   const turnIndicator = document.getElementById('turn-indicator');
   const turnText = document.getElementById('turn-text');
-  const isMyTurn = gameState.currentPlayerIndex === myIndex;
-  const isClaimPhase = gameState.phase === 'destroying';
-  const isMyClaimTurn = isClaimPhase && gameState.destruction?.currentClaimerIndex === myIndex;
   
   turnIndicator.classList.remove('waiting', 'claiming');
   if (isClaimPhase) {

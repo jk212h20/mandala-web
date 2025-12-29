@@ -986,3 +986,215 @@ body {
 .turn-indicator:not(.waiting) {
   animation: pulse 2s ease-in-out infinite;
 }
+
+/* ===== YOUR TURN GLOW ===== */
+#game-screen.your-turn {
+  box-shadow: inset 0 0 60px rgba(78, 205, 196, 0.3);
+}
+
+#game-screen.your-turn .hand-container {
+  box-shadow: 0 0 30px rgba(78, 205, 196, 0.4);
+  animation: turnGlow 2s ease-in-out infinite;
+}
+
+@keyframes turnGlow {
+  0%, 100% { box-shadow: 0 0 20px rgba(78, 205, 196, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(78, 205, 196, 0.5); }
+}
+
+/* ===== LAST MOVE INDICATOR ===== */
+.card.last-move {
+  position: relative;
+}
+
+.card.last-move::after {
+  content: '★';
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  font-size: 12px;
+  color: var(--accent-yellow);
+  text-shadow: 0 0 5px var(--accent-yellow);
+}
+
+.field.last-move-area,
+.mountain.last-move-area {
+  position: relative;
+}
+
+.field.last-move-area::before,
+.mountain.last-move-area::before {
+  content: 'Last Move';
+  position: absolute;
+  top: -8px;
+  right: 8px;
+  font-size: 0.6rem;
+  background: var(--accent-yellow);
+  color: #000;
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-weight: bold;
+  z-index: 10;
+}
+
+/* ===== CLAIM PHASE - ALL SAME COLOR GLOW ===== */
+.card.claim-glow {
+  animation: claimColorGlow 0.8s ease-in-out infinite;
+}
+
+@keyframes claimColorGlow {
+  0%, 100% { 
+    box-shadow: 0 0 8px rgba(255, 217, 61, 0.5);
+    transform: scale(1);
+  }
+  50% { 
+    box-shadow: 0 0 20px rgba(255, 217, 61, 0.9);
+    transform: scale(1.05);
+  }
+}
+
+/* ===== HIDDEN CUP CARDS (Starting 2) ===== */
+.card.starting-card {
+  position: relative;
+  opacity: 0.7;
+}
+
+.card.starting-card::before {
+  content: '?';
+  position: absolute;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* ===== SCORE BREAKDOWN DISPLAY ===== */
+.score-breakdown {
+  margin-top: 1.5rem;
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.score-breakdown-title {
+  font-size: 0.9rem;
+  color: var(--accent-cyan);
+  margin-bottom: 10px;
+  text-align: left;
+}
+
+.score-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.score-row:last-child {
+  border-bottom: none;
+}
+
+.score-river-value {
+  font-size: 1rem;
+  font-weight: bold;
+  color: var(--accent-yellow);
+  min-width: 24px;
+}
+
+.score-multiply {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.score-cards-container {
+  display: flex;
+  gap: 2px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.score-equals {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.score-subtotal {
+  font-weight: bold;
+  color: var(--accent-yellow);
+  min-width: 30px;
+  text-align: right;
+}
+
+.score-total-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 2px solid rgba(255, 255, 255, 0.2);
+  font-weight: bold;
+}
+
+.score-total-row .total-label {
+  color: var(--text-primary);
+}
+
+.score-total-row .total-value {
+  font-size: 1.2rem;
+  color: var(--accent-yellow);
+}
+
+/* Two-column score breakdown for game over */
+.score-breakdowns-container {
+  display: flex;
+  gap: 15px;
+  margin-top: 1rem;
+}
+
+.score-breakdown-column {
+  flex: 1;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+}
+
+.score-breakdown-column.you {
+  border: 1px solid var(--accent-cyan);
+}
+
+.score-breakdown-column.opponent {
+  border: 1px solid var(--accent-red);
+}
+
+.breakdown-header {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.mini-score-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+  font-size: 0.75rem;
+}
+
+.mini-score-row .value {
+  font-weight: bold;
+  color: var(--accent-yellow);
+}
+
+.mini-score-row .cards {
+  display: flex;
+  gap: 1px;
+}
+
+.mini-score-row .result {
+  margin-left: auto;
+  font-weight: bold;
+  color: var(--accent-yellow);
+}
