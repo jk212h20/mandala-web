@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Mandala Game</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Lobby Screen -->
+    <div id="lobby-screen" class="screen">
+      <div class="lobby-content">
+        <h1>🎨 Mandala</h1>
+        <p class="subtitle">A two-player card game</p>
+        
+        <div class="name-input">
+          <label for="player-name">Your Name</label>
+          <input type="text" id="player-name" placeholder="Enter your name" maxlength="20" value="">
+        </div>
+        
+        <div class="lobby-buttons">
+          <button id="create-btn" class="btn btn-primary">
+            <span class="btn-icon">✨</span>
+            Create Game
+          </button>
+          
+          <div class="divider"><span>or</span></div>
+          
+          <div class="join-section">
+            <input type="text" id="room-code" placeholder="Enter code" maxlength="4" class="code-input">
+            <button id="join-btn" class="btn btn-secondary">Join</button>
+          </div>
+        </div>
+        
+        <div id="error-message" class="error-message"></div>
+      </div>
+    </div>
+    
+    <!-- Waiting Screen -->
+    <div id="waiting-screen" class="screen hidden">
+      <div class="waiting-content">
+        <h2>Waiting for opponent...</h2>
+        <div class="room-code-display">
+          <span class="label">Share this code:</span>
+          <span id="display-room-code" class="code">----</span>
+          <button id="copy-code-btn" class="btn btn-small">📋 Copy</button>
+        </div>
+        <div class="loading-spinner"></div>
+        <button id="cancel-btn" class="btn btn-danger">Cancel</button>
+      </div>
+    </div>
+    
+    <!-- Game Screen -->
+    <div id="game-screen" class="screen hidden">
+      <!-- Top Bar -->
+      <div class="top-bar">
+        <div class="player-info opponent">
+          <span id="opponent-name" class="player-name">Opponent</span>
+          <span id="opponent-hand-count" class="card-count">6 cards</span>
+        </div>
+        <div class="turn-indicator" id="turn-indicator">
+          <span id="turn-text">Your Turn</span>
+        </div>
+        <div class="game-info">
+          <span id="deck-count">Deck: 0</span>
+        </div>
+      </div>
+      
+      <!-- Opponent's Area (collapsed) -->
+      <div class="opponent-area">
+        <div class="opponent-river" id="opponent-river"></div>
+        <div class="opponent-cup">
+          <span class="label">Cup:</span>
+          <span id="opponent-cup-count">2</span>
+          <span class="label">cards</span>
+        </div>
+      </div>
+      
+      <!-- Mandalas -->
+      <div class="mandalas-container">
+        <div class="mandala" id="mandala-0">
+          <div class="mandala-header">
+            <span class="mandala-title">Mandala 1</span>
+            <span class="mandala-colors" id="mandala-0-colors"></span>
+          </div>
+          <div class="field opponent-field" id="mandala-0-opponent-field">
+            <div class="field-label">Opponent's Field</div>
+            <div class="cards-row" id="mandala-0-field-1"></div>
+          </div>
+          <div class="mountain" id="mandala-0-mountain">
+            <div class="mountain-label">⛰️ Mountain</div>
+            <div class="cards-row" id="mandala-0-mountain-cards"></div>
+          </div>
+          <div class="field your-field" id="mandala-0-your-field">
+            <div class="field-label">Your Field</div>
+            <div class="cards-row" id="mandala-0-field-0"></div>
+          </div>
+          <div class="mandala-actions" id="mandala-0-actions"></div>
+        </div>
+        
+        <div class="mandala" id="mandala-1">
+          <div class="mandala-header">
+            <span class="mandala-title">Mandala 2</span>
+            <span class="mandala-colors" id="mandala-1-colors"></span>
+          </div>
+          <div class="field opponent-field" id="mandala-1-opponent-field">
+            <div class="field-label">Opponent's Field</div>
+            <div class="cards-row" id="mandala-1-field-1"></div>
+          </div>
+          <div class="mountain" id="mandala-1-mountain">
+            <div class="mountain-label">⛰️ Mountain</div>
+            <div class="cards-row" id="mandala-1-mountain-cards"></div>
+          </div>
+          <div class="field your-field" id="mandala-1-your-field">
+            <div class="field-label">Your Field</div>
+            <div class="cards-row" id="mandala-1-field-0"></div>
+          </div>
+          <div class="mandala-actions" id="mandala-1-actions"></div>
+        </div>
+      </div>
+      
+      <!-- Your Area -->
+      <div class="your-area">
+        <div class="your-river" id="your-river"></div>
+        <div class="your-cup">
+          <span class="label">Your Cup:</span>
+          <span id="your-cup-count">2</span>
+          <div class="cup-cards" id="your-cup-cards"></div>
+        </div>
+      </div>
+      
+      <!-- Your Hand -->
+      <div class="hand-container">
+        <div class="hand-header">
+          <span class="hand-title">Your Hand</span>
+          <span id="selected-count" class="selected-count"></span>
+        </div>
+        <div class="hand-cards" id="your-hand"></div>
+      </div>
+      
+      <!-- Action Bar -->
+      <div class="action-bar" id="action-bar">
+        <button id="btn-discard" class="btn btn-action" disabled>
+          🔄 Discard & Draw
+        </button>
+      </div>
+    </div>
+    
+    <!-- Claim Modal -->
+    <div id="claim-modal" class="modal hidden">
+      <div class="modal-content">
+        <h2>🎯 Claim a Color</h2>
+        <p id="claim-subtitle">Choose a color from the mountain</p>
+        <div id="claim-options" class="claim-options"></div>
+      </div>
+    </div>
+    
+    <!-- Game Over Modal -->
+    <div id="game-over-modal" class="modal hidden">
+      <div class="modal-content">
+        <h2 id="game-over-title">Game Over!</h2>
+        <div class="scores-display">
+          <div class="score-box your-score">
+            <span class="score-label">You</span>
+            <span id="your-final-score" class="score-value">0</span>
+          </div>
+          <div class="vs">vs</div>
+          <div class="score-box opponent-score">
+            <span class="score-label" id="opponent-score-label">Opponent</span>
+            <span id="opponent-final-score" class="score-value">0</span>
+          </div>
+        </div>
+        <div class="game-over-buttons">
+          <button id="rematch-btn" class="btn btn-primary">🔄 Rematch</button>
+          <button id="leave-btn" class="btn btn-secondary">🚪 Leave</button>
+        </div>
+        <p id="rematch-status" class="rematch-status"></p>
+      </div>
+    </div>
+    
+    <!-- Connection Lost Modal -->
+    <div id="disconnect-modal" class="modal hidden">
+      <div class="modal-content">
+        <h2>⚠️ Connection Lost</h2>
+        <p>Your opponent has disconnected.</p>
+        <button id="disconnect-leave-btn" class="btn btn-primary">Return to Lobby</button>
+      </div>
+    </div>
+  </div>
+  
+  <script src="client.js"></script>
+</body>
+</html>

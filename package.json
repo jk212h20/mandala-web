@@ -1,0 +1,18 @@
+{
+  "name": "mandala-game",
+  "version": "1.0.0",
+  "description": "Two-player Mandala card game - play online with friends",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "ws": "^8.14.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
