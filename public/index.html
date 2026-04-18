@@ -34,7 +34,17 @@
             <span class="btn-icon">✨</span>
             Create Game
           </button>
-          
+
+          <!-- "Play vs Bot" is hidden by default and only revealed when
+               the server's /health endpoint reports bot=configured (i.e.
+               AZ_SERVICE_URL is set on the deploy). Lets us ship the UI
+               scaffolding now and flip the switch by setting the env var
+               on Railway once the checkpoint is validated. -->
+          <button id="bot-btn" class="btn btn-primary hidden">
+            <span class="btn-icon">🤖</span>
+            Play vs Bot
+          </button>
+
           <div class="divider"><span>or</span></div>
           
           <div class="join-section">

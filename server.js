@@ -7,6 +7,9 @@ import { WebSocketServer } from 'ws';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { createGame, performAction, getPlayerView, getWinner } from './game.js';
+import { getAzClient } from './bot_client.js';
+import { pumpBotMoves, findBotIndex } from './bot_runner.js';
+import { templateIndexFromAction, actorIndexForAction } from './bot_templates.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -20,6 +23,44 @@ app.use(express.static(join(__dirname, 'public')));
 
 // Game rooms storage
 const rooms = new Map();
+
+// AZ bot client — null if AZ_SERVICE_URL is not configured. When null,
+// any 'create_bot_room' request returns an error; existing room flows
+// (create_room / join_room) are unaffected.
+const azClient = getAzClient();
+const BOT_NAME = '🤖 Mandala Bot';
+
+// Schedule a bot move pump for `room` after the current event loop tick
+// finishes. We do it via setImmediate so the human's broadcast goes out
+// before the bot starts thinking, and so any errors thrown by the pump
+// are caught (we attach .catch on the returned promise).
+function maybePumpBot(room) {
+  if (!azClient) return;
+  if (!room || !room.gameState) return;
+  if (findBotIndex(room) === null) return;
+  setImmediate(() => {
+    pumpBotMoves(room, azClient, broadcastGameState, send).catch((err) => {
+      console.error(`[bot] room=${room.code} unexpected pump error:`, err);
+    });
+  });
+}
+
+// Append an action's template index + actor seat to a room's running
+// history. Called AFTER the engine has already validated the action but
+// BEFORE we discard the pre-action state — we need the pre-state to
+// resolve cardIds back to colors. Safe to call even for non-bot rooms;
+// the list is just data, harmless if no one consumes it.
+function appendHistory(room, action, preState) {
+  if (!room.history) room.history = [];
+  try {
+    const templateIndex = templateIndexFromAction(action, preState);
+    const actorIndex = actorIndexForAction(action, preState);
+    room.history.push({ templateIndex, actorIndex });
+  } catch (err) {
+    // Don't kill the game over a logging-style failure; just warn loudly.
+    console.warn(`[history] room=${room.code} encode failed:`, err.message);
+  }
+}
 
 // Generate a random 4-letter room code
 function generateRoomCode() {
@@ -103,6 +144,7 @@ wss.on('connection', (ws) => {
           code,
           players: [{ ws, name: message.name || 'Player 1' }],
           gameState: null,
+          history: [],
           createdAt: Date.now(),
         };
         rooms.set(code, room);
@@ -111,6 +153,64 @@ wss.on('connection', (ws) => {
 
         send(ws, 'room_created', { roomCode: code, playerIndex: 0 });
         console.log(`Room ${code} created by ${message.name}`);
+        break;
+      }
+
+      case 'create_bot_room': {
+        // Single-player room with the AZ bot as opponent. Game starts
+        // immediately; no waiting screen, no shared code.
+        if (!azClient) {
+          send(ws, 'error', {
+            message: 'Bot opponent unavailable (AZ_SERVICE_URL not configured on server).',
+          });
+          break;
+        }
+
+        // Random seat assignment unless caller specified humanFirst.
+        // humanFirst === true -> human is seat 0 (goes first);
+        // humanFirst === false -> bot is seat 0 (goes first);
+        // undefined -> 50/50.
+        const humanFirst = typeof message.humanFirst === 'boolean'
+          ? message.humanFirst
+          : Math.random() < 0.5;
+        const humanIdx = humanFirst ? 0 : 1;
+        const botIdx = 1 - humanIdx;
+        const humanName = message.name || 'You';
+
+        let code;
+        do {
+          code = generateRoomCode();
+        } while (rooms.has(code));
+
+        const players = [null, null];
+        players[humanIdx] = { ws, name: humanName };
+        players[botIdx] = { ws: null, name: BOT_NAME, isBot: true };
+
+        const room = {
+          code,
+          players,
+          gameState: createGame(players[0].name, players[1].name),
+          history: [],
+          createdAt: Date.now(),
+        };
+        rooms.set(code, room);
+        currentRoom = room;
+        playerIndex = humanIdx;
+
+        // Tell the human their seat + opponent name, then send initial state.
+        send(ws, 'game_started', {
+          playerIndex: humanIdx,
+          opponentName: BOT_NAME,
+        });
+        broadcastGameState(room);
+
+        // If the bot has the first turn (humanFirst === false), kick off
+        // the pump so it plays immediately.
+        maybePumpBot(room);
+
+        console.log(
+          `Bot room ${code} created by ${humanName} (humanIdx=${humanIdx}, botIdx=${botIdx})`
+        );
         break;
       }
 
@@ -173,12 +273,17 @@ wss.on('connection', (ws) => {
           return;
         }
 
-        const result = performAction(currentRoom.gameState, message.action);
+        const preState = currentRoom.gameState;
+        const result = performAction(preState, message.action);
 
         if (!result.success) {
           send(ws, 'error', { message: result.error });
           return;
         }
+
+        // Record the action against the PRE-state (we need the actor's
+        // hand to resolve cardIds back to colors for template encoding).
+        appendHistory(currentRoom, message.action, preState);
 
         currentRoom.gameState = result.newState;
         
@@ -197,6 +302,11 @@ wss.on('connection', (ws) => {
               youWon: winner.winnerId === currentRoom.players[index].name,
             });
           });
+        } else {
+          // If the room contains a bot and it's now the bot's turn (or
+          // claim turn during destruction), let the bot play. No-op for
+          // human-vs-human rooms.
+          maybePumpBot(currentRoom);
         }
         break;
       }
@@ -210,6 +320,12 @@ wss.on('connection', (ws) => {
         // Mark this player as ready for rematch
         currentRoom.players[playerIndex].wantsRematch = true;
 
+        // Bot rooms: the bot always accepts rematches automatically.
+        const botSeat = findBotIndex(currentRoom);
+        if (botSeat !== null) {
+          currentRoom.players[botSeat].wantsRematch = true;
+        }
+
         // Check if both players want rematch
         if (currentRoom.players.every(p => p.wantsRematch)) {
           // Swap player order for fairness
@@ -222,41 +338,56 @@ wss.on('connection', (ws) => {
           // Update playerIndex for both
           playerIndex = playerIndex === 0 ? 1 : 0;
           
-          // Create new game
+          // Create new game (and reset action history — the encoder
+          // history is per-game, not per-room).
           currentRoom.gameState = createGame(
             currentRoom.players[0].name,
             currentRoom.players[1].name
           );
+          currentRoom.history = [];
 
           currentRoom.players.forEach((player, index) => {
-            send(player.ws, 'rematch_started', { playerIndex: index });
+            if (player.ws) {
+              send(player.ws, 'rematch_started', { playerIndex: index });
+            }
           });
-          
+
           broadcastGameState(currentRoom);
+          // If the bot is now first to move, kick the pump.
+          maybePumpBot(currentRoom);
           console.log(`Rematch started in room ${currentRoom.code}`);
         } else {
-          // Notify opponent that this player wants rematch
+          // Notify opponent that this player wants rematch (only if it's
+          // a human seat — bots don't need notifications).
           const opponentIndex = 1 - playerIndex;
-          send(currentRoom.players[opponentIndex].ws, 'rematch_requested', {});
+          const opponent = currentRoom.players[opponentIndex];
+          if (opponent && opponent.ws) {
+            send(opponent.ws, 'rematch_requested', {});
+          }
         }
         break;
       }
 
       case 'leave_room': {
         if (currentRoom) {
-          // Notify other player
-          const otherPlayer = currentRoom.players.find((_, i) => i !== playerIndex);
+          // Notify other player (humans only)
+          const otherPlayer = currentRoom.players.find((p, i) => i !== playerIndex && p);
           if (otherPlayer?.ws) {
             send(otherPlayer.ws, 'opponent_left', {});
           }
-          
-          // Clean up room if empty
-          currentRoom.players = currentRoom.players.filter((_, i) => i !== playerIndex);
-          if (currentRoom.players.length === 0) {
+
+          // Clean up: remove this player, then delete the room if no
+          // humans remain. A lone bot seat is not worth preserving.
+          currentRoom.players[playerIndex] = null;
+          const remainingHumans = currentRoom.players.filter(p => p && !p.isBot);
+          if (remainingHumans.length === 0) {
             rooms.delete(currentRoom.code);
             console.log(`Room ${currentRoom.code} deleted`);
+          } else {
+            // Compact the array to drop nulls (legacy human-vs-human flow).
+            currentRoom.players = currentRoom.players.filter(p => p);
           }
-          
+
           currentRoom = null;
           playerIndex = null;
         }
@@ -272,15 +403,24 @@ wss.on('connection', (ws) => {
 
   ws.on('close', () => {
     console.log('Client disconnected');
-    
+
     if (currentRoom) {
-      // Notify other player
+      const isBotRoom = findBotIndex(currentRoom) !== null;
+
+      if (isBotRoom) {
+        // No reason to keep a bot room alive once the human leaves.
+        rooms.delete(currentRoom.code);
+        console.log(`Bot room ${currentRoom.code} deleted on human disconnect`);
+        return;
+      }
+
+      // Human-vs-human: notify opponent, mark this seat disconnected
+      // (allow reconnect — though no reconnect handler exists today, this
+      // is the legacy behaviour we don't want to disturb).
       const otherPlayer = currentRoom.players.find((_, i) => i !== playerIndex);
       if (otherPlayer?.ws && otherPlayer.ws.readyState === 1) {
         send(otherPlayer.ws, 'opponent_disconnected', {});
       }
-      
-      // Mark this player as disconnected but don't remove yet (allow reconnect)
       if (currentRoom.players[playerIndex]) {
         currentRoom.players[playerIndex].ws = null;
         currentRoom.players[playerIndex].disconnectedAt = Date.now();
@@ -295,7 +435,11 @@ wss.on('connection', (ws) => {
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', rooms: rooms.size });
+  res.json({
+    status: 'ok',
+    rooms: rooms.size,
+    bot: azClient ? 'configured' : 'disabled',
+  });
 });
 
 // Start server

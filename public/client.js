@@ -104,7 +104,13 @@ function handleMessage(message) {
     case 'opponent_left':
       modals.disconnect.classList.remove('hidden');
       break;
-      
+
+    case 'bot_error':
+      // Bot service hiccupped (timeout, downtime, illegal action).
+      // Surface inline so the user knows why the game stalled.
+      showError(`Bot error: ${message.message}`);
+      break;
+
     case 'error':
       showError(message.message);
       break;
@@ -695,6 +701,14 @@ function createRoom() {
   send('create_room', { name, memoryHelper: memoryHelperEnabled });
 }
 
+function createBotRoom() {
+  const name = document.getElementById('player-name').value.trim() || 'You';
+  memoryHelperEnabled = document.getElementById('memory-helper').checked;
+  // humanFirst omitted -> server picks randomly. For deterministic UX
+  // testing you can override here.
+  send('create_bot_room', { name, memoryHelper: memoryHelperEnabled });
+}
+
 function joinRoom() {
   const name = document.getElementById('player-name').value.trim() || 'Player 2';
   const code = document.getElementById('room-code').value.trim().toUpperCase();
@@ -744,6 +758,7 @@ function returnToLobby() {
 
 // ===== Event Listeners =====
 document.getElementById('create-btn').onclick = createRoom;
+document.getElementById('bot-btn').onclick = createBotRoom;
 document.getElementById('join-btn').onclick = joinRoom;
 document.getElementById('cancel-btn').onclick = cancelWaiting;
 document.getElementById('copy-code-btn').onclick = copyCode;
@@ -751,6 +766,22 @@ document.getElementById('btn-discard').onclick = discardRedraw;
 document.getElementById('rematch-btn').onclick = requestRematch;
 document.getElementById('leave-btn').onclick = leaveGame;
 document.getElementById('disconnect-leave-btn').onclick = returnToLobby;
+
+// Feature-detect bot availability via /health. Only show the "Play vs Bot"
+// button when the server reports bot='configured'. This means deploys
+// without AZ_SERVICE_URL get the legacy lobby unchanged; deploys with it
+// get the bot button automatically.
+fetch('/health')
+  .then(r => r.json())
+  .then(h => {
+    if (h && h.bot === 'configured') {
+      document.getElementById('bot-btn').classList.remove('hidden');
+    }
+  })
+  .catch(err => {
+    // Non-fatal: just leave the button hidden if /health is unreachable.
+    console.warn('health check failed:', err);
+  });
 
 // Enter key handlers
 document.getElementById('player-name').onkeydown = (e) => {

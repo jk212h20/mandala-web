@@ -62,6 +62,14 @@ body {
   display: none !important;
 }
 
+/* Generic hidden utility for arbitrary elements (e.g. the bot button when
+   AZ_SERVICE_URL is not configured server-side). Lower specificity than
+   .screen.hidden so it doesn't conflict. */
+button.hidden,
+.btn.hidden {
+  display: none !important;
+}
+
 /* ===== LOBBY SCREEN ===== */
 .lobby-content {
   flex: 1;
